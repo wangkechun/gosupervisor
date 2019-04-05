@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+option go_package = "pb";
+
+service GoSupervisor {
+  rpc Ping(PingRequest) returns (PingReply) {}
+  rpc List(ListRequest) returns (ListReply) {}
+  rpc Command(CommandRequest) returns (CommandReply) {}
+}
+message PingRequest {}
+message PingReply { string service_version = 1; }
+
+message ProcessSpec {
+  string process_name = 1;
+  string command = 2;
+  string user = 3;
+  string directory = 13;
+  repeated string environment = 12;
+}
+
+message ProcessStatus {
+  int32 restarted_count = 1;
+  int32 last_started_time = 2;
+  int32 pid = 3;
+  int32 memory_usage = 4;
+  enum Status {
+    INIT = 0;
+    STARTING = 1;
+    RUNNING = 2;
+    STOPED = 4;
+    FAILED = 5;
+  }
+  Status status = 5;
+  string desc = 6;
+  bool is_manual_stop = 7;
+}
+
+message Process {
+  ProcessSpec spec = 1;
+  ProcessStatus status = 2;
+}
+
+message ListRequest {}
+
+message ListReply { repeated Process process = 1; }
+
+message CommandRequest {
+  enum Command {
+    NONE = 0;
+    STOP = 1;
+    START = 2;
+    RESTART = 3;
+    KILL = 4;
+  }
+  Command command = 1;
+  string process_name = 2;
+}
+message CommandReply {}
+
+message ConfigFile {
+  string version = 1;
+  repeated ProcessSpec process = 2;
+  string rpc_addr = 3;
+}
