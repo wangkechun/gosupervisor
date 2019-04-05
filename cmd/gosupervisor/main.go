@@ -7,9 +7,7 @@ import (
 	"os"
 
 	"github.com/olekukonko/tablewriter"
-
 	"github.com/pkg/errors"
-
 	"github.com/spf13/cobra"
 	"github.com/wangkechun/gosupervisor/pkg/process"
 	pb "github.com/wangkechun/gosupervisor/pkg/proto"
@@ -36,7 +34,7 @@ func main() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())
 			if err != nil {
-				log.Fatalf("did not connect: %v", err)
+				return errors.Wrapf(err, "did not connect daemon, addr:%v", serverAddr)
 			}
 			defer conn.Close()
 			c := pb.NewGoSupervisorClient(conn)
@@ -48,7 +46,14 @@ func main() {
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"ProcessName", "Pid", "Status", "Desc", "Directory", "Command", "Environment"})
 			for _, v := range r.Process {
-				table.Append([]string{v.Spec.ProcessName, fmt.Sprint(v.Status.Pid), fmt.Sprint(v.Status.Status), v.Status.Desc, v.Spec.Directory, v.Spec.Command, fmt.Sprint(v.Spec.Environment)})
+				table.Append([]string{
+					v.Spec.ProcessName,
+					fmt.Sprint(v.Status.Pid),
+					fmt.Sprint(v.Status.Status),
+					v.Status.Desc,
+					v.Spec.Directory,
+					v.Spec.Command,
+					fmt.Sprint(v.Spec.Environment)})
 			}
 			table.Render()
 			return nil
@@ -62,7 +67,7 @@ func main() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())
 			if err != nil {
-				log.Fatalf("did not connect: %v", err)
+				return errors.Wrapf(err, "did not connect daemon, addr:%v", serverAddr)
 			}
 			defer conn.Close()
 			c := pb.NewGoSupervisorClient(conn)

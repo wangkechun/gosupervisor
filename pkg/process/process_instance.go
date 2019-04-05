@@ -11,7 +11,8 @@ import (
 	pb "github.com/wangkechun/gosupervisor/pkg/proto"
 )
 
-const ProcessWaitTime = time.Second * 3 // 进程启动3秒之后，认为是成功启动
+const processWaitTime = time.Second * 3     // 进程启动3秒之后，认为是成功启动
+const processStopTimeout = time.Second * 30 // 停止进程最多等待30s
 
 type procesInstances struct {
 	spec   pb.ProcessSpec
@@ -39,8 +40,8 @@ func (p *procesInstances) stop() error {
 	if err != nil {
 		return errors.Wrap(err, "interrupt process")
 	}
-	for i := 0; i < 300; i++ {
-		time.Sleep(time.Second / 10)
+	for i := 0; i < 100; i++ {
+		time.Sleep(processStopTimeout / 100)
 		if p.cmd != nil && p.cmd.ProcessState != nil && p.cmd.ProcessState.Exited() {
 			p.status.Desc = "process stoped"
 			p.status.IsManualStop = true
@@ -88,7 +89,7 @@ func (p *procesInstances) watchProcess() {
 		if p.cmd != nil {
 			p.status.Desc = p.cmd.ProcessState.String()
 		}
-	case <-time.After(ProcessWaitTime):
+	case <-time.After(processWaitTime):
 		log.Println("process alive 3s", p.spec.ProcessName)
 		{
 			p.lock.Lock()
@@ -128,12 +129,12 @@ func (p *procesInstances) start() error {
 	p.cmd.Dir = p.spec.Directory
 	p.cmd.Env = p.spec.Environment
 	p.status.Status = pb.ProcessStatus_STARTING
-	p.status.Desc = ""
+	p.status.Desc = "starting"
 	p.status.IsManualStop = false
 	err := p.cmd.Start()
 	if err != nil {
 		p.status.Status = pb.ProcessStatus_FAILED
-		p.status.Desc = err.Error()
+		p.status.Desc = "start failed " + err.Error()
 		return errors.Wrap(err, "process start")
 	}
 	go p.watchProcess()

@@ -50,7 +50,7 @@ func (s *serverInstance) Command(ctx context.Context, req *pb.CommandRequest) (r
 		err = p.stop()
 		return &pb.CommandReply{}, err
 	}
-	return nil, status.Error(codes.Unimplemented, "未实现")
+	return nil, status.Error(codes.Unimplemented, "Unimplemented")
 }
 
 func RunServer(cfgPath string) error {
