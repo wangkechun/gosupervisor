@@ -15,8 +15,10 @@ import (
 )
 
 var serverAddr string
+var verbose bool
 
 func main() {
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
 	var cmdDaemon = &cobra.Command{
 		Use:     "daemon CONFIG_PATH",
 		Example: "daemon config.conf",
@@ -44,21 +46,38 @@ func main() {
 				return errors.Wrap(err, "call List")
 			}
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"ProcessName", "Pid", "Status", "Desc", "Directory", "Command", "Environment"})
-			for _, v := range r.Process {
-				table.Append([]string{
-					v.Spec.ProcessName,
-					fmt.Sprint(v.Status.Pid),
-					fmt.Sprint(v.Status.Status),
-					v.Status.Desc,
-					v.Spec.Directory,
-					v.Spec.Command,
-					fmt.Sprint(v.Spec.Environment)})
+			if !verbose {
+				table.SetHeader([]string{"ProcessName", "Pid", "Status", "ProcessDesc", "Desc"})
+				for _, v := range r.Process {
+					table.Append([]string{
+						v.Spec.ProcessName,
+						fmt.Sprint(v.Status.Pid),
+						fmt.Sprint(v.Status.Status),
+						v.Status.ProcessDesc,
+						v.Spec.Desc,
+					})
+				}
+			} else {
+				table.SetHeader([]string{"ProcessName", "Pid", "Status", "ProcessDesc", "Desc", "Directory", "Command", "Environment"})
+				for _, v := range r.Process {
+					table.Append([]string{
+						v.Spec.ProcessName,
+						fmt.Sprint(v.Status.Pid),
+						fmt.Sprint(v.Status.Status),
+						v.Status.ProcessDesc,
+						v.Spec.Desc,
+						v.Spec.Directory,
+						v.Spec.Command,
+						fmt.Sprint(v.Spec.Environment),
+					})
+				}
 			}
+
 			table.Render()
 			return nil
 		},
 	}
+	cmdStatus.Flags().BoolVarP(&verbose, "verbose", "v", false, "")
 
 	var cmdPing = &cobra.Command{
 		Use:   "ping",

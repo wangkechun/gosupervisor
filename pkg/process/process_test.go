@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+	"github.com/mattn/go-shellwords"
 	"github.com/stretchr/testify/assert"
 	pb "github.com/wangkechun/gosupervisor/pkg/proto"
 )
@@ -41,11 +42,36 @@ process:{
 	var p pb.ConfigFile
 	err := proto.UnmarshalText(config, &p)
 	a.Nil(err)
-	s := serverInstance{config: &p, process: make(map[string]*procesInstances)}
-	a.Nil(s.load())
+	s := serverInstance{config: &p, process: make(map[string]*processInstances)}
+	a.Nil(s.initLoad())
 	// s.startAll()
 	m := jsonpb.Marshaler{EmitDefaults: true}
 	r := s.readStatusAll()
 	_, err = m.MarshalToString(&r)
 	a.Nil(err)
+}
+
+type testStruct struct {
+	a string
+}
+
+func TestStructCopy(t *testing.T) {
+	a := assert.New(t)
+	aa := testStruct{a: "aa"}
+	bb := &aa
+	var cc testStruct = *bb
+	a.Equal(cc.a, "aa")
+	cc.a = "cc"
+	a.Equal(cc.a, "cc")
+	a.Equal(aa.a, "aa")
+	aa.a = "aaa"
+	a.Equal(aa.a, "aaa")
+	a.Equal(bb.a, "aaa")
+}
+
+func TestShellwordsParse(t *testing.T) {
+	a := assert.New(t)
+	args, err := shellwords.Parse("sh -c 'aa'  ")
+	a.Nil(err)
+	a.Equal(args, []string{"sh", "-c", "aa"})
 }

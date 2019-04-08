@@ -13,9 +13,19 @@ message PingReply { string service_version = 1; }
 message ProcessSpec {
   string process_name = 1;
   string command = 2;
-  string user = 3;
-  string directory = 13;
-  repeated string environment = 12;
+  string directory = 4;
+  repeated string environment = 5;
+  float startsecs = 6;
+  int32 startretries = 7;
+  enum Autorestart {
+    FALSE = 0;
+    UNEXPECTED = 1;
+    TRUE = 2;
+  }
+  Autorestart autorestart = 8;
+  repeated int32 exitcodes = 9;
+  bool autostart = 10;
+  string desc = 11;
 }
 
 message ProcessStatus {
@@ -27,12 +37,14 @@ message ProcessStatus {
     INIT = 0;
     STARTING = 1;
     RUNNING = 2;
-    STOPED = 4;
-    FAILED = 5;
+    STOPPED = 4;
+    STOPPING = 6;
+    BACKOFF = 7;
+    FATAL = 8;
+    EXITED = 9;
   }
   Status status = 5;
-  string desc = 6;
-  bool is_manual_stop = 7;
+  string process_desc = 6;
 }
 
 message Process {

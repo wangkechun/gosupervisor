@@ -41,10 +41,10 @@ func (s *serverInstance) Command(ctx context.Context, req *pb.CommandRequest) (r
 		if err != nil {
 			return &pb.CommandReply{}, err
 		}
-		err = p.start()
+		err = p.start(startByManual)
 		return &pb.CommandReply{}, err
 	case pb.CommandRequest_START:
-		err = p.start()
+		err = p.start(startByManual)
 		return &pb.CommandReply{}, err
 	case pb.CommandRequest_STOP:
 		err = p.stop()
@@ -54,6 +54,8 @@ func (s *serverInstance) Command(ctx context.Context, req *pb.CommandRequest) (r
 }
 
 func RunServer(cfgPath string) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	buf, err := ioutil.ReadFile(cfgPath)
 	if err != nil {
 		return errors.Wrap(err, "read config failed")
@@ -63,26 +65,22 @@ func RunServer(cfgPath string) error {
 	if err != nil {
 		return errors.Wrap(err, "parse config failed")
 	}
-	s := &serverInstance{config: &p, process: make(map[string]*procesInstances)}
-	err = s.load()
+	s := &serverInstance{config: &p, process: make(map[string]*processInstances)}
+	err = s.initLoad()
 	if err != nil {
 		return errors.Wrap(err, "load config failed")
 	}
-	s.startAll()
-
+	s.initStartAll()
+	go s.initRunMonitor(ctx)
 	lis, err := net.Listen("tcp", p.RpcAddr)
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen, addr %v", p.RpcAddr)
 	}
 	svr := grpc.NewServer()
 	pb.RegisterGoSupervisorServer(svr, s)
+	log.Println("gosupervisor listen addr:", p.RpcAddr)
 	if err := svr.Serve(lis); err != nil {
 		return errors.Wrap(err, "failed to serve")
 	}
-	log.Println("gosupervisor start success, addr:", p.RpcAddr)
 	return nil
-}
-
-func init() {
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
 }
