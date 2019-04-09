@@ -18,4 +18,4 @@ a simple golang supervisor implementation for PingCAP Interview.
 [Demo video](https://wkc-doc.oss-cn-shanghai.aliyuncs.com/20190405/gosupervisor_20190405.mp4)
 
 
-xxxx
+xxxxxxx
