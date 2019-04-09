@@ -3,4 +3,4 @@ steps:
   args:
   - --destination=gcr.io/$PROJECT_ID/image
   - --cache=true
-  - --cache-ttl=XXh
+  - --cache-ttl=1d
